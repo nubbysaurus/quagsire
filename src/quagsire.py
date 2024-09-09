@@ -31,7 +31,7 @@ def quagsire(args: argparse.Namespace):
     """
     Ingest thermal imagery and spit out info on water content.
     """
-    print([arg for arg in args])
+    print(args)
 
 if __name__ == "__main__":
     args = parse_args()
