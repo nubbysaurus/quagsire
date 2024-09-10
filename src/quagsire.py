@@ -8,9 +8,21 @@ import argparse
 import cv2
 import numpy as np
 
+from dataclasses import dataclass
+
+
+# Defines.
+_GRAY16_MAX = 65535
+_GRAY8_MAX = 255
 
 # Typedefs.
-Point = tuple[int, int]
+@dataclass
+class Point:
+    x: int
+    y: int
+    celsius: float = 0.0
+    val: int = 0
+
 NpArray = list[list[int]]
 
 
@@ -38,7 +50,7 @@ def parse_args() -> argparse.Namespace:
 def gray16_to_gray8(gray16: NpArray) -> NpArray:
     """Convert an image into a Numpy array representing"""
     gray8 = np.zeros((160, 120), dtype=np.uint8)
-    gray8 = cv2.normalize(gray16, gray8, 0, 255, cv2.NORM_MINMAX)
+    gray8 = cv2.normalize(gray16, gray8, 0, _GRAY8_MAX, cv2.NORM_MINMAX)
     gray8 = np.uint8(gray8)
     return gray8
 
@@ -67,6 +79,14 @@ def img_to_tmtx(therm: NpArray) -> tuple[NpArray, Point, Point]:
             * t_min     (Point)     : Index of pixel with min temperature.
             * t_max     (Point)     : Index of pixel with max temperature.
     """
+    pt_max = Point(x=0, y=0, val=0)
+    pt_min = Point(x=0, y=0, val=_GRAY16_MAX)
+    for x, row in enumerate(therm):
+        for y, val in enumerate(row):
+            pt = Point(x=x, y=y, val=val)
+            pt_max = pt if val > pt_max.val else pt_max
+            pt_min = pt if val < pt_min.val else pt_min
+
     return [], [None, None], [None, None]
 
 def img_analyze(img: NpArray, therm: NpArray):
@@ -80,9 +100,11 @@ def img_analyze(img: NpArray, therm: NpArray):
 # Display.
 def display(
         img: NpArray,
+        c_map: str = "",
         title: str = "Test"
     ):
     try:
+        img = cv2.applyColorMap(img, cv2.COLORMAP_JET) if c_map else img
         cv2.imshow(title, img)
         cv2.waitKey(0)
     except cv2.error as e:
@@ -99,7 +121,10 @@ def quagsire(args: argparse.Namespace):
     """
     img, therm = img_read(args.input)
     img_analyze(img, therm)
-    display(img)
+    print(f"gray8: {str(img)}")
+    print(f"gray16: {str(therm)}")
+    display(img, c_map="Jet", title="colored")
+    display(therm, title="gray16")
     clean_up()
 
 if __name__ == "__main__":
