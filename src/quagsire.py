@@ -14,14 +14,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "-i",
         "--input",
-        default="flight.tif",
+        default="flights/flight.tif",
         help="Provide an input file for eating.",
         type=str
     )
     parser.add_argument(
         "-o",
         "--output",
-        default="report.md",
+        default="reports/report.md",
         help="Regurgitated output file.",
         type=str
     )
