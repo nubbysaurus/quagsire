@@ -10,7 +10,8 @@ import numpy as np
 
 
 # Typedefs.
-type Point = tuple[int, int]
+Point = tuple[int, int]
+NpArray = list[list[int]]
 
 
 # Setup.
@@ -34,13 +35,14 @@ def parse_args() -> argparse.Namespace:
 
 # Data processing.
 ## Image ingestion.
-def gray16_to_gray8(gray16: np.array) -> np.array:
+def gray16_to_gray8(gray16: NpArray) -> NpArray:
     """Convert an image into a Numpy array representing"""
     gray8 = np.zeros((160, 120), dtype=np.uint8)
     gray8 = cv2.normalize(gray16, gray8, 0, 255, cv2.NORM_MINMAX)
     gray8 = np.uint8(gray8)
+    return gray8
 
-def img_read(ipath: str) -> [np.array, np.array]:
+def img_read(ipath: str) -> [NpArray, NpArray]:
     """Convert an image file into some iterable object.
     """
     # Convert image into:
@@ -56,18 +58,18 @@ def img_read(ipath: str) -> [np.array, np.array]:
     return gray8, gray16
 
 ## Image analysis.
-def img_to_tmtx(therm: np.array) -> np.array, Point, Point:
+def img_to_tmtx(therm: NpArray) -> tuple[NpArray, Point, Point]:
     """Convert a gray16 image into a matrix of temperatures represented by each
         pixel.
 
         Returns:
-            * t_matrix  (np.array)  : Assign each pixel a temperature [C].
+            * t_matrix  (NpArray)  : Assign each pixel a temperature [C].
             * t_min     (Point)     : Index of pixel with min temperature.
             * t_max     (Point)     : Index of pixel with max temperature.
     """
-    pass
+    return [], [None, None], [None, None]
 
-def img_analyze(img: np.array, therm: np.array):
+def img_analyze(img: NpArray, therm: NpArray):
     """Find the following about a given image:
         1. Max/Min indices and their temperatures.
         2. CWSI matrix for entire plot.
@@ -77,7 +79,7 @@ def img_analyze(img: np.array, therm: np.array):
 
 # Display.
 def display(
-        img: np.array,
+        img: NpArray,
         title: str = "Test"
     ):
     try:
