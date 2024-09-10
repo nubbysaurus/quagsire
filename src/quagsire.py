@@ -9,6 +9,7 @@ import cv2
 import numpy as np
 
 
+# Setup.
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -27,11 +28,18 @@ def parse_args() -> argparse.Namespace:
     )
     return parser.parse_args()
 
+# Data ingestion.
+def img_read(ipath: str) -> list(str):
+    pass
+
+
+# Main.
 def quagsire(args: argparse.Namespace):
     """
     Ingest thermal imagery and spit out info on water content.
     """
-    print(args)
+    img_data = img_read(arg.input)
+    print(img_data)
 
 if __name__ == "__main__":
     args = parse_args()
