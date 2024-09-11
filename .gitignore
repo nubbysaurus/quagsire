@@ -1,3 +1,6 @@
 # I/O.
 flights/*
 reports/*
+
+# OS.
+*.DS_Store
