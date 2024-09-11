@@ -14,8 +14,11 @@ from dataclasses import dataclass
 # Defines.
 _GRAY16_MAX = 65535
 _GRAY8_MAX = 255
-_TEMP_MIN = 15.0
 _TEMP_MAX = 38.0
+_TEMP_AIR = 21.111111   # From online archives.
+_TEMP_CL = _TEMP_AIR    # TODO(nubby): This is the shirt in the bucket temp.
+_TEMP_CU = _TEMP_MAX    # TODO(nubby): This is the dead plant temp; might just
+                        # add 5 degrees to _TEMP_CL.
 
 # Typedefs.
 @dataclass
@@ -26,12 +29,17 @@ class Point:
 
     # TODO(nubby): Verify.
     def celsius(self) -> float:
-        return _TEMP_MIN + (
-            self.val / _GRAY16_MAX
-        ) * (_TEMP_MAX - _TEMP_MIN)
+        return _TEMP_AIR + (
+            (_GRAY16_MAX - self.val) / _GRAY16_MAX
+        ) * (_TEMP_MAX - _TEMP_AIR)
 
     def cwsi(self) -> float:
-        return 0.0
+        return (
+            (self.celsius() - _TEMP_AIR) - (_TEMP_CL - _TEMP_AIR)
+        ) / (
+            (_TEMP_CU - _TEMP_AIR) - (_TEMP_CL - _TEMP_AIR)
+        )
+
 
 NpArray = list[list[int]]
 
@@ -101,14 +109,37 @@ def img_to_tmtx(therm: NpArray) -> tuple[NpArray, Point, Point]:
     
     return t_matrix, pt_max, pt_min
 
+def add_label(img: NpArray, pt: Point):
+    cv2.circle(img, (pt.x, pt.y), 20, (0, 0, 255), 2)
+    cv2.putText(
+        img,
+        "{0:.1f} C".format(pt.celsius()),
+        (pt.x - 80, pt.y - 15),
+        cv2.FONT_HERSHEY_PLAIN,
+        1,
+        (255,0,0),
+        2
+    )
+    cv2.putText(
+        img,
+        "CWSI: {0:.1f}".format(pt.cwsi()),
+        (pt.x - 80, pt.y - 45),
+        cv2.FONT_HERSHEY_PLAIN,
+        1,
+        (255,0,0),
+        2
+    )
+
+
 def img_analyze(img: NpArray, therm: NpArray):
     """Find the following about a given image:
         1. Max/Min indices and their temperatures.
         2. CWSI matrix for entire plot.
     """
     t_matrix, pt_t_max, pt_t_min = img_to_tmtx(therm)
-    cv2.circle(img, (pt_t_max.x, pt_t_max.y), 2, (0, 0, 255), 2)
-    cv2.circle(img, (pt_t_min.x, pt_t_min.y), 2, (0, 0, 255), 2)
+    add_label(img, pt_t_max)
+    add_label(img, pt_t_min)
+
 
 # Display.
 def display(
