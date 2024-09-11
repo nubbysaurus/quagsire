@@ -14,14 +14,24 @@ from dataclasses import dataclass
 # Defines.
 _GRAY16_MAX = 65535
 _GRAY8_MAX = 255
+_TEMP_MIN = 15.0
+_TEMP_MAX = 38.0
 
 # Typedefs.
 @dataclass
 class Point:
     x: int
     y: int
-    celsius: float = 0.0
     val: int = 0
+
+    # TODO(nubby): Verify.
+    def celsius(self) -> float:
+        return _TEMP_MIN + (
+            self.val / _GRAY16_MAX
+        ) * (_TEMP_MAX - _TEMP_MIN)
+
+    def cwsi(self) -> float:
+        return 0.0
 
 NpArray = list[list[int]]
 
@@ -79,6 +89,7 @@ def img_to_tmtx(therm: NpArray) -> tuple[NpArray, Point, Point]:
             * t_min     (Point)     : Index of pixel with min temperature.
             * t_max     (Point)     : Index of pixel with max temperature.
     """
+    t_matrix = []
     pt_max = Point(x=0, y=0, val=0)
     pt_min = Point(x=0, y=0, val=_GRAY16_MAX)
     for x, row in enumerate(therm):
@@ -86,16 +97,18 @@ def img_to_tmtx(therm: NpArray) -> tuple[NpArray, Point, Point]:
             pt = Point(x=x, y=y, val=val)
             pt_max = pt if val > pt_max.val else pt_max
             pt_min = pt if val < pt_min.val else pt_min
-
-    return [], [None, None], [None, None]
+            t_matrix.append(pt)
+    
+    return t_matrix, pt_max, pt_min
 
 def img_analyze(img: NpArray, therm: NpArray):
     """Find the following about a given image:
         1. Max/Min indices and their temperatures.
         2. CWSI matrix for entire plot.
     """
-    t_matrix, t_min, t_max = img_to_tmtx(therm)
-
+    t_matrix, pt_t_max, pt_t_min = img_to_tmtx(therm)
+    cv2.circle(img, (pt_t_max.x, pt_t_max.y), 2, (0, 0, 255), 2)
+    cv2.circle(img, (pt_t_min.x, pt_t_min.y), 2, (0, 0, 255), 2)
 
 # Display.
 def display(
@@ -116,13 +129,10 @@ def clean_up():
 
 # Main.
 def quagsire(args: argparse.Namespace):
-    """
-    Ingest thermal imagery and spit out info on water content.
+    """Ingest thermal imagery and spit out info on water content.
     """
     img, therm = img_read(args.input)
     img_analyze(img, therm)
-    print(f"gray8: {str(img)}")
-    print(f"gray16: {str(therm)}")
     display(img, c_map="Jet", title="colored")
     display(therm, title="gray16")
     clean_up()
